@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../core/constants/api_constants.dart';
+import '../../core/constant/api_constants.dart';
 import '../../core/utils/logger.dart';
 
 abstract class RemoteDataSource {
@@ -28,7 +28,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw Exception("Gagal mengambil data terbaru");
       }
     } catch (e) {
-      Logger.debug("Error fetchTerbaru: $e");
+      VumiLogger.log("Error fetchTerbaru", error: e);
       rethrow;
     }
   }
@@ -45,7 +45,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw Exception("Gagal mengambil data populer");
       }
     } catch (e) {
-      Logger.debug("Error fetchPopulerAll: $e");
+      VumiLogger.log("Error fetchPopulerAll", error: e);
       rethrow;
     }
   }
@@ -65,7 +65,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw Exception("Pencarian gagal");
       }
     } catch (e) {
-      Logger.debug("Error searchManga: $e");
+      VumiLogger.log("Error searchManga", error: e);
       rethrow;
     }
   }
@@ -84,7 +84,7 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         throw Exception("Gagal mengambil detail komik");
       }
     } catch (e) {
-      Logger.debug("Error fetchDetailManga: $e");
+      VumiLogger.log("Error fetchDetailManga", error: e);
       rethrow;
     }
   }

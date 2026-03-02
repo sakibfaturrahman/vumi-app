@@ -1,12 +1,13 @@
+import '../../domain/entities/comic.dart';
+
 class ComicModel {
   final String title;
   final String slug;
   final String thumbnail;
-  final String? type; // Ini yang akan membedakan Manga, Manhwa, atau Manhua
+  final String? type;
   final String? genre;
   final String? updateStatus;
   final String? description;
-  final Map<String, dynamic>? chapters;
 
   ComicModel({
     required this.title,
@@ -16,20 +17,29 @@ class ComicModel {
     this.genre,
     this.updateStatus,
     this.description,
-    this.chapters,
   });
 
-  // Factory untuk merubah JSON dari API VUMI menjadi Objek Dart
   factory ComicModel.fromJson(Map<String, dynamic> json) {
     return ComicModel(
       title: json['title'] ?? '',
       slug: json['slug'] ?? '',
       thumbnail: json['thumbnail'] ?? '',
-      type: json['type'], // Contoh: "Manga", "Manhwa", atau "Manhua"
+      type: json['type'],
       genre: json['genre'],
       updateStatus: json['updateStatus'],
       description: json['description'],
-      chapters: json['chapters'],
+    );
+  }
+
+  // Fungsi konversi dari Model ke Entity
+  Comic toEntity() {
+    return Comic(
+      title: title,
+      slug: slug,
+      thumbnail: thumbnail,
+      type: type,
+      genre: genre,
+      updateStatus: updateStatus,
     );
   }
 
@@ -40,9 +50,8 @@ class ComicModel {
       'thumbnail': thumbnail,
       'type': type,
       'genre': genre,
-      'update_status': updateStatus,
+      'updateStatus': updateStatus,
       'description': description,
-      'chapters': chapters,
     };
   }
 }
