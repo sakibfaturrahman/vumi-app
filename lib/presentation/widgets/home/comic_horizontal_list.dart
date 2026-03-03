@@ -1,29 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:velocity_x/velocity_x.dart';
+import '../../../domain/entities/comic.dart';
 
 class ComicHorizontalList extends StatelessWidget {
-  final String endpoint;
-  const ComicHorizontalList({super.key, required this.endpoint});
+  final List<Comic> data;
+  const ComicHorizontalList({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
+    if (data.isEmpty)
+      return "Tidak ada data".text.gray500.make().centered().h(220);
+
     return SizedBox(
-      height: 220,
+      height: 230,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 10,
+        itemCount: data.length,
         itemBuilder: (context, index) {
+          final comic = data[index];
           return VStack([
-            // Image Card
-            VxBox().color(Vx.gray200).roundedLg.width(130).height(170).make(),
+            // Image Card dengan Shadow halus
+            VxBox(
+                  child: Image.network(
+                    comic.thumbnail,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.image_not_supported).centered(),
+                  ),
+                ).roundedLg
+                .clip(Clip.antiAlias)
+                .width(130)
+                .height(180)
+                .shadowSm
+                .make(),
 
-            5.heightBox,
+            8.heightBox,
 
-            // Judul
-            "Judul Komik".text.sm.bold.maxLines(1).ellipsis.make().w(130),
-            "Chapter 120".text.xs.gray500.make(),
-          ]).p4();
+            // Judul dan Type (Manga/Manhwa)
+            comic.title.text.sm.bold.maxLines(1).ellipsis.make().w(130),
+            (comic.type ?? "Comic").text.xs.gray500.make(),
+          ]).p4().onTap(() {
+            // Navigator ke halaman detail nanti
+            print("Detail: ${comic.slug}");
+          });
         },
       ),
     );

@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:velocity_x/velocity_x.dart';
-// Import widget global yang sudah kita buat sebelumnya
+
+// Import Bloc
+import '../bloc/home_cubit.dart';
+
+// Import UseCases
+import '../../domain/usecases/get_terbaru.dart';
+import '../../domain/usecases/get_populer.dart'; // Tambahkan import ini
+import '../../domain/usecases/get_populer_manga.dart';
+import '../../domain/usecases/get_populer_manhwa.dart';
+import '../../domain/usecases/get_populer_manhua.dart';
+
+// Import Pages & Widgets
+import 'home_page.dart';
 import '../widgets/global/custom_header.dart';
 import '../widgets/global/custom_bottom_bar.dart';
 
@@ -14,21 +27,27 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // List halaman utama aplikasi VUMI
-  final List<Widget> _pages = [
-    const Center(child: Text("Home Page")), // Ganti dengan HomePage() kamu
-    const Center(
-      child: Text("History Page"),
-    ), // Ganti dengan HistoryPage() kamu
-    const Center(
-      child: Text("Favorite Page"),
-    ), // Ganti dengan FavoritePage() kamu
-    const Center(
-      child: Text("Explore Page"),
-    ), // Ganti dengan ExplorePage() kamu
-  ];
+  // Gunakan BuildContext dari build method agar context.read selalu valid
+  List<Widget> _getPages(BuildContext context) {
+    return [
+      BlocProvider(
+        create: (blocContext) => HomeCubit(
+          // Pastikan SEMUA 5 parameter ini terisi sesuai urutan di constructor HomeCubit
+          getTerbaru: context.read<GetTerbaru>(),
+          getPopuler: context
+              .read<GetPopuler>(), // Tambahkan ini agar tidak NULL
+          getPopulerManga: context.read<GetPopulerManga>(),
+          getPopulerManhwa: context.read<GetPopulerManhwa>(),
+          getPopulerManhua: context.read<GetPopulerManhua>(),
+        )..fetchHomeData(),
+        child: const HomePage(),
+      ),
+      const Center(child: Text("Halaman Riwayat")),
+      const Center(child: Text("Halaman Disukai")),
+      const Center(child: Text("Halaman Jelajahi")),
+    ];
+  }
 
-  // Helper untuk mendapatkan judul menu berdasarkan halaman aktif
   String _getMenuTitle() {
     switch (_currentIndex) {
       case 0:
@@ -46,14 +65,14 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = _getPages(context);
+
     return Scaffold(
-      // Header dengan Search Bar & Tombol Titik Tiga
       appBar: const CustomHeader(),
 
-      // Menggunakan IndexedStack agar state halaman tidak ter-reset saat berpindah tab
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      // IndexedStack menjaga state halaman agar tidak reload saat pindah tab
+      body: IndexedStack(index: _currentIndex, children: pages),
 
-      // Navigasi bawah melayang (Floating style) yang sudah kita buat
       bottomNavigationBar: CustomBottomBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -63,17 +82,14 @@ class _MainScreenState extends State<MainScreen> {
         },
       ),
 
-      // Drawer samping (muncul saat icon titik tiga di header diklik)
       endDrawer: Drawer(
         child: VStack([
-          // Header Drawer
           VxBox(
             child: _getMenuTitle().text.white.xl2.bold.make().p20(),
           ).blue600.make().wFull(context).safeArea(),
 
           20.heightBox,
 
-          // List Menu Dinamis
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text("Pengaturan"),
@@ -86,8 +102,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
 
           const Spacer(),
-
-          // Versi Aplikasi
           "v1.0.0".text.gray400.make().centered().p20(),
         ]),
       ),

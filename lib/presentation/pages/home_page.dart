@@ -1,38 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:velocity_x/velocity_x.dart';
+import '../bloc/home_cubit.dart';
+import '../bloc/home_state.dart';
 import '../widgets/home/featured_section.dart';
 import '../widgets/home/comic_horizontal_list.dart';
+import '../widgets/home/comic_featured_card.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: VStack([
-        // 1. Card Paling Atas (Komik Populer All)
-        const FeaturedSection(),
+    return BlocBuilder<HomeCubit, HomeState>(
+      builder: (context, state) {
+        if (state is HomeLoading) {
+          return const CircularProgressIndicator().centered();
+        } else if (state is HomeError) {
+          return state.message.text.red500.make().centered().p20();
+        } else if (state is HomeLoaded) {
+          return RefreshIndicator(
+            onRefresh: () => context.read<HomeCubit>().fetchHomeData(),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: VStack([
+                // Featured Section menggunakan data Manga sebagai headline
+                FeaturedSection(data: state.manga.take(5).toList()),
 
-        // 2. Section Komik Terbaru (Baru Update)
-        "Baru Update".text.xl2.bold.make().p16(),
-        const ComicHorizontalList(endpoint: 'terbaru'),
+                "Baru Update".text.xl2.bold.make().p16(),
+                ComicFeaturedCard(data: state.terbaru),
 
-        // 3. Section Manga Populer
-        _buildSectionTitle("Manga Terpopuler"),
-        const ComicHorizontalList(endpoint: 'manga'),
+                _buildSectionTitle("Manga Terpopuler"),
+                ComicHorizontalList(data: state.manga),
 
-        // 4. Section Manhwa Populer
-        _buildSectionTitle("Manhwa Terpopuler"),
-        const ComicHorizontalList(endpoint: 'manhwa'),
+                _buildSectionTitle("Manhwa Terpopuler"),
+                ComicHorizontalList(data: state.manhwa),
 
-        // 5. Section Manhua Populer
-        _buildSectionTitle("Manhua Terpopuler"),
-        const ComicHorizontalList(endpoint: 'manhua'),
+                _buildSectionTitle("Manhua Terpopuler"),
+                ComicHorizontalList(data: state.manhua),
 
-        // Beri spasi bawah agar tidak tertutup Bottom Bar
-        100.heightBox,
-      ]),
+                120.heightBox,
+              ]),
+            ),
+          );
+        }
+        return const SizedBox();
+      },
     );
   }
 

@@ -6,7 +6,13 @@ class GetPopuler {
 
   GetPopuler(this.repository);
 
-  Future<List<Comic>> execute() {
-    return repository.getPopulerAll();
+  Future<List<Comic>> execute() async {
+    try {
+      final result = await repository.getPopulerAll();
+      // Pastikan mengembalikan list kosong [] jika null
+      return result ?? [];
+    } catch (e) {
+      return []; // Return list kosong jika error agar UI tidak crash
+    }
   }
 }

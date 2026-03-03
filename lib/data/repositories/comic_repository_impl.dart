@@ -6,15 +6,11 @@ import '../models/comic_model.dart';
 class ComicRepositoryImpl implements ComicRepository {
   final RemoteDataSource remoteDataSource;
 
-  // Constructor untuk menyuntikkan (inject) datasource ke repository
   ComicRepositoryImpl({required this.remoteDataSource});
 
   @override
   Future<List<Comic>> getTerbaru() async {
-    // Memanggil data mentah (JSON) dari datasource
     final List<dynamic> jsonList = await remoteDataSource.fetchTerbaru();
-
-    // Mapping: Mengubah setiap Map JSON menjadi objek ComicModel
     return jsonList
         .map((json) => ComicModel.fromJson(json).toEntity())
         .toList();
@@ -28,9 +24,36 @@ class ComicRepositoryImpl implements ComicRepository {
         .toList();
   }
 
+  // --- Implementasi Fungsi Baru Berdasarkan Endpoint Spesifik ---
+
+  @override
+  Future<List<Comic>> getPopulerManga() async {
+    final List<dynamic> jsonList = await remoteDataSource.fetchPopulerManga();
+    return jsonList
+        .map((json) => ComicModel.fromJson(json).toEntity())
+        .toList();
+  }
+
+  @override
+  Future<List<Comic>> getPopulerManhwa() async {
+    final List<dynamic> jsonList = await remoteDataSource.fetchPopulerManhwa();
+    return jsonList
+        .map((json) => ComicModel.fromJson(json).toEntity())
+        .toList();
+  }
+
+  @override
+  Future<List<Comic>> getPopulerManhua() async {
+    final List<dynamic> jsonList = await remoteDataSource.fetchPopulerManhua();
+    return jsonList
+        .map((json) => ComicModel.fromJson(json).toEntity())
+        .toList();
+  }
+
+  // -----------------------------------------------------------
+
   @override
   Future<List<Comic>> searchComic(String query) async {
-    // Mengarahkan parameter query ke datasource
     final List<dynamic> jsonList = await remoteDataSource.searchManga(query);
     return jsonList
         .map((json) => ComicModel.fromJson(json).toEntity())
@@ -39,7 +62,6 @@ class ComicRepositoryImpl implements ComicRepository {
 
   @override
   Future<Comic> getDetailComic(String slug) async {
-    // Mengambil data detail komik tunggal berdasarkan slug
     final Map<String, dynamic> json = await remoteDataSource.fetchDetailManga(
       slug,
     );

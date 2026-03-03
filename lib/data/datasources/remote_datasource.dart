@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../core/constant/api_constants.dart';
-import '../../core/utils/logger.dart';
+import 'dart:developer' as dev;
 
 abstract class RemoteDataSource {
-  // Kontrak fungsi yang harus ada
   Future<List<dynamic>> fetchTerbaru();
   Future<List<dynamic>> fetchPopulerAll();
+  Future<List<dynamic>> fetchPopulerManga(); // Tambahan untuk endpoint spesifik
+  Future<List<dynamic>> fetchPopulerManhwa();
+  Future<List<dynamic>> fetchPopulerManhua();
   Future<List<dynamic>> searchManga(String query);
   Future<Map<String, dynamic>> fetchDetailManga(String slug);
 }
@@ -16,20 +18,25 @@ class RemoteDataSourceImpl implements RemoteDataSource {
 
   RemoteDataSourceImpl({required this.client});
 
-  @override
-  Future<List<dynamic>> fetchTerbaru() async {
-    try {
-      final response = await client.get(Uri.parse(ApiConstants.terbaru));
+  // Fungsi Helper Utama untuk mencegah error Subtype Map vs List
+  List<dynamic> _handleResponse(http.Response response, String context) {
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> decodedData = json.decode(response.body);
+      final dynamic result = decodedData['data'];
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['data']; // Mengambil array 'data' dari response API Vumi
-      } else {
-        throw Exception("Gagal mengambil data terbaru");
+      if (result is List) {
+        return result;
+      } else if (result is Map) {
+        // Jika API mengirim Map kategori, kita ambil semua isinya jadi satu List
+        final List<dynamic> combined = [];
+        result.forEach((key, value) {
+          if (value is List) combined.addAll(value);
+        });
+        return combined;
       }
-    } catch (e) {
-      VumiLogger.log("Error fetchTerbaru", error: e);
-      rethrow;
+      return []; // Return list kosong jika data tidak dikenali
+    } else {
+      throw Exception("Gagal di $context: Status ${response.statusCode}");
     }
   }
 
@@ -37,15 +44,45 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   Future<List<dynamic>> fetchPopulerAll() async {
     try {
       final response = await client.get(Uri.parse(ApiConstants.popularAll));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['data'];
-      } else {
-        throw Exception("Gagal mengambil data populer");
-      }
+      return _handleResponse(response, "Populer All");
     } catch (e) {
-      VumiLogger.log("Error fetchPopulerAll", error: e);
+      dev.log("Error fetchPopulerAll: $e");
+      rethrow;
+    }
+  }
+
+  // Implementasi untuk endpoint spesifik sesuai gambar API kamu
+  @override
+  Future<List<dynamic>> fetchPopulerManga() async {
+    final response = await client.get(
+      Uri.parse("${ApiConstants.baseUrl}/komik-populer/manga"),
+    );
+    return _handleResponse(response, "manga");
+  }
+
+  @override
+  Future<List<dynamic>> fetchPopulerManhwa() async {
+    final response = await client.get(
+      Uri.parse("${ApiConstants.baseUrl}/komik-populer/manhwa"),
+    );
+    return _handleResponse(response, "manhwa");
+  }
+
+  @override
+  Future<List<dynamic>> fetchPopulerManhua() async {
+    final response = await client.get(
+      Uri.parse("${ApiConstants.baseUrl}/komik-populer/manhua"),
+    );
+    return _handleResponse(response, "manhua");
+  }
+
+  @override
+  Future<List<dynamic>> fetchTerbaru() async {
+    try {
+      final response = await client.get(Uri.parse(ApiConstants.terbaru));
+      return _handleResponse(response, "terbaru");
+    } catch (e) {
+      dev.log("Error fetchTerbaru: $e");
       rethrow;
     }
   }
@@ -53,19 +90,12 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   @override
   Future<List<dynamic>> searchManga(String query) async {
     try {
-      // Menggunakan endpoint /api/vumi/search?q=
       final response = await client.get(
         Uri.parse("${ApiConstants.search}?q=$query"),
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['data'];
-      } else {
-        throw Exception("Pencarian gagal");
-      }
+      return _handleResponse(response, "Search");
     } catch (e) {
-      VumiLogger.log("Error searchManga", error: e);
+      dev.log("Error searchManga: $e");
       rethrow;
     }
   }
@@ -73,18 +103,15 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   @override
   Future<Map<String, dynamic>> fetchDetailManga(String slug) async {
     try {
-      // Menggunakan endpoint /api/vumi/detail-komik/{slug}
       final response = await client.get(
         Uri.parse("${ApiConstants.detailKomik}/$slug"),
       );
-
       if (response.statusCode == 200) {
-        return json.decode(response.body)['data'];
-      } else {
-        throw Exception("Gagal mengambil detail komik");
+        return json.decode(response.body)['data'] as Map<String, dynamic>;
       }
+      throw Exception("Detail Gagal");
     } catch (e) {
-      VumiLogger.log("Error fetchDetailManga", error: e);
+      dev.log("Error Detail: $e");
       rethrow;
     }
   }
