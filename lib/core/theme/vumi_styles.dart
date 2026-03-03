@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:velocity_x/velocity_x.dart';
 
 class VumiStyles {
-  // Custom Card Style ala desain referensi kamu
+  // =============================
+  // CARD DECORATION (FIX PUTIH)
+  // =============================
   static BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
-    color: context.theme.cardColor,
+    color: Colors.white, // 🔥 Paksa putih
     borderRadius: BorderRadius.circular(16),
     boxShadow: [
       BoxShadow(
@@ -15,10 +17,17 @@ class VumiStyles {
     ],
   );
 
-  // Gradient untuk Featured Card (Card paling atas)
+  // =============================
+  // FEATURED OVERLAY GRADIENT
+  // =============================
   static LinearGradient overlayGradient = LinearGradient(
     begin: Alignment.bottomCenter,
     end: Alignment.topCenter,
     colors: [Colors.black.withOpacity(0.8), Colors.transparent],
   );
+
+  // =============================
+  // OPTIONAL: APP BACKGROUND STYLE
+  // =============================
+  static Color scaffoldBackground = Colors.white;
 }

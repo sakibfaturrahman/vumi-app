@@ -20,28 +20,60 @@ class ComicFeaturedCard extends StatelessWidget {
 
         return VxBox(
               child: HStack([
+                // =============================
+                // SISI KIRI: DETAIL TEKS
+                // =============================
                 VStack([
-                  "New Episode!".text.orange500.bold.xs
-                      .make()
-                      .box
-                      .white
-                      .roundedFull
-                      .padding(
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                      )
-                      .make(),
-                  10.heightBox,
-                  comic.title.text.xl2.extraBold.black
+                  // =============================
+                  // BADGE NEW EPISODE (FIXED)
+                  // =============================
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // penting!
+                      children: const [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 12,
+                          color: Colors.orange,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          "New Episode!",
+                          style: TextStyle(
+                            color: Colors.orange,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  12.heightBox,
+
+                  comic.title.text.xl.extraBold.black
                       .maxLines(2)
                       .ellipsis
+                      .tight
                       .make(),
-                  5.heightBox,
-                  // Menampilkan Type (Manga/Manhwa/Manhua) sebagai sub-title
-                  "${comic.type ?? 'Manga'} • Friend".text.gray600.semiBold.sm
-                      .make(),
-                ]).p16().expand(),
 
-                // SISI KANAN: Foto Karakter/Thumbnail
+                  6.heightBox,
+
+                  "${comic.type ?? 'Manga'} • Friend".text.gray600.semiBold.xs
+                      .make(),
+                ], crossAlignment: CrossAxisAlignment.start).p16().expand(),
+
+                // =============================
+                // SISI KANAN: THUMBNAIL
+                // =============================
                 VxBox(
                       child: Image.network(
                         comic.thumbnail,
@@ -50,7 +82,7 @@ class ComicFeaturedCard extends StatelessWidget {
                             const Icon(Icons.image, color: Colors.grey),
                       ),
                     )
-                    .width(context.screenWidth * 0.3)
+                    .width(context.screenWidth * 0.35)
                     .height(double.infinity)
                     .clip(Clip.antiAlias)
                     .make(),
@@ -68,7 +100,6 @@ class ComicFeaturedCard extends StatelessWidget {
             .margin(const EdgeInsets.symmetric(horizontal: 5))
             .make()
             .onTap(() {
-              // Navigasi ke detail menggunakan slug
               debugPrint("Detail: ${comic.slug}");
             });
       },
