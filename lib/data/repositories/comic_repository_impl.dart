@@ -1,7 +1,9 @@
 import '../../domain/repositories/comic_repository.dart';
 import '../../domain/entities/comic.dart';
+import '../../domain/entities/comic_detail.dart';
 import '../datasources/remote_datasource.dart';
 import '../models/comic_model.dart';
+import '../models/comic_detail_model.dart';
 
 class ComicRepositoryImpl implements ComicRepository {
   final RemoteDataSource remoteDataSource;
@@ -61,10 +63,19 @@ class ComicRepositoryImpl implements ComicRepository {
   }
 
   @override
-  Future<Comic> getDetailComic(String slug) async {
+  Future<ComicDetail> getDetailComic(String slug) async {
     final Map<String, dynamic> json = await remoteDataSource.fetchDetailManga(
       slug,
     );
-    return ComicModel.fromJson(json).toEntity();
+    final model = ComicDetailModel.fromJson(json);
+
+    return ComicDetail(
+      title: model.title,
+      description: model.description,
+      thumbnail: model.thumbnail,
+      genres: model.genres,
+      info: model.info,
+      chapters: model.chapters,
+    );
   }
 }

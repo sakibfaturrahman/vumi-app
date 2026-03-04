@@ -12,6 +12,8 @@ import 'domain/usecases/get_populer.dart';
 import 'domain/usecases/get_populer_manga.dart';
 import 'domain/usecases/get_populer_manhwa.dart';
 import 'domain/usecases/get_populer_manhua.dart';
+// WAJIB: Import Use Case Detail yang baru dibuat
+import 'domain/usecases/get_detail_komik.dart';
 
 // Import Presentation Layer
 import 'presentation/pages/main_screen.dart';
@@ -26,9 +28,15 @@ void main() {
   );
 
   runApp(
-    // 3. Daftarkan SEMUA UseCase di sini agar tidak NULL saat dipanggil context.read
+    // 3. Daftarkan DataSource dan UseCase di sini
     MultiRepositoryProvider(
       providers: [
+        // DAFTARKAN RemoteDataSource agar DetailPage tidak error
+        RepositoryProvider<RemoteDataSource>(
+          create: (context) => remoteDataSource,
+        ),
+
+        // UseCase untuk Beranda
         RepositoryProvider<GetTerbaru>(
           create: (context) => GetTerbaru(comicRepository),
         ),
@@ -44,6 +52,11 @@ void main() {
         RepositoryProvider<GetPopulerManhua>(
           create: (context) => GetPopulerManhua(comicRepository),
         ),
+
+        // WAJIB: Daftarkan GetDetailKomik untuk digunakan di DetailPage
+        RepositoryProvider<GetDetailKomik>(
+          create: (context) => GetDetailKomik(comicRepository),
+        ),
       ],
       child: const VumiApp(),
     ),
@@ -58,21 +71,26 @@ class VumiApp extends StatelessWidget {
     return MaterialApp(
       title: 'VUMI',
       debugShowCheckedModeBanner: false,
+      // Menggunakan tema sistem agar adaptif di HP Infinix kamu
       themeMode: ThemeMode.system,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.amber,
+        ), // Sesuaikan ke Amber
         scaffoldBackgroundColor: Colors.white,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
+          seedColor: Colors.amber,
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: const Color(
+          0xFF0F172A,
+        ), // Warna Slate/Dark mode
       ),
       home: const MainScreen(),
     );
