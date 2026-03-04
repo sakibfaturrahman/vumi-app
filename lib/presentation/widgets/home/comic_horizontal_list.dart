@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:velocity_x/velocity_x.dart';
 import '../../../domain/entities/comic.dart';
+import '../../pages/detail_page.dart';
 
 class ComicHorizontalList extends StatelessWidget {
   final List<Comic> data;
-  const ComicHorizontalList({super.key, required this.data});
+  final String categoryLabel; // <--- Tambahkan parameter ini
+
+  const ComicHorizontalList({
+    super.key,
+    required this.data,
+    required this.categoryLabel, // <--- Wajib diisi dari HomePage
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (data.isEmpty)
+    if (data.isEmpty) {
       return "Tidak ada data".text.gray500.make().centered().h(220);
+    }
 
     return SizedBox(
-      height: 230,
+      height: 250,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -21,13 +29,15 @@ class ComicHorizontalList extends StatelessWidget {
         itemBuilder: (context, index) {
           final comic = data[index];
           return VStack([
-            // Image Card dengan Shadow halus
+            // Image Card
             VxBox(
                   child: Image.network(
                     comic.thumbnail,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.image_not_supported).centered(),
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.grey,
+                    ).centered(),
                   ),
                 ).roundedLg
                 .clip(Clip.antiAlias)
@@ -38,12 +48,17 @@ class ComicHorizontalList extends StatelessWidget {
 
             8.heightBox,
 
-            // Judul dan Type (Manga/Manhwa)
-            comic.title.text.sm.bold.maxLines(1).ellipsis.make().w(130),
-            (comic.type ?? "Comic").text.xs.gray500.make(),
+            // Judul
+            comic.title.text.sm.bold.maxLines(2).ellipsis.make().w(130),
+
+            // Type Badge (Sekarang menggunakan label dari parameter HomePage)
+            categoryLabel.text.xs.semiBold.amber600.make().pOnly(top: 2),
           ]).p4().onTap(() {
-            // Navigator ke halaman detail nanti
-            print("Detail: ${comic.slug}");
+            // Navigasi ke Detail Page dengan membawa data entitas
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DetailPage(data: comic)),
+            );
           });
         },
       ),

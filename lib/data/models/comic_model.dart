@@ -22,12 +22,12 @@ class ComicModel {
   factory ComicModel.fromJson(Map<String, dynamic> json) {
     return ComicModel(
       title: json['title'] ?? '',
-      slug: json['slug'] ?? '',
+      slug: json['mangaSlug'] ?? json['slug'] ?? '', // Sesuaikan key slug kamu
       thumbnail: json['thumbnail'] ?? '',
-      type: json['type'],
+      // Pastikan key 'type' sesuai dengan response API Express kamu
+      type: json['type'] ?? 'manga',
       genre: json['genre'],
-      updateStatus: json['updateStatus'],
-      description: json['description'],
+      updateStatus: json['updateTime'],
     );
   }
 

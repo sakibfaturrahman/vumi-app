@@ -1,114 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:velocity_x/velocity_x.dart';
-import 'presentation/bloc/home_cubit.dart';
-import 'presentation/bloc/home_state.dart';
-import 'presentation/widgets/home/featured_section.dart';
-import 'presentation/widgets/home/comic_horizontal_list.dart';
-import 'presentation/widgets/home/comic_featured_card.dart';
+import 'package:http/http.dart' as http;
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+// Import Data Layer
+import 'data/datasources/remote_datasource.dart';
+import 'data/repositories/comic_repository_impl.dart';
+
+// Import Domain Layer (UseCase)
+import 'domain/usecases/get_terbaru.dart';
+import 'domain/usecases/get_populer.dart';
+import 'domain/usecases/get_populer_manga.dart';
+import 'domain/usecases/get_populer_manhwa.dart';
+import 'domain/usecases/get_populer_manhua.dart';
+
+// Import Presentation Layer
+import 'presentation/pages/main_screen.dart';
+
+void main() {
+  // 1. Inisialisasi Data Source
+  final remoteDataSource = RemoteDataSourceImpl(client: http.Client());
+
+  // 2. Inisialisasi Repository
+  final comicRepository = ComicRepositoryImpl(
+    remoteDataSource: remoteDataSource,
+  );
+
+  runApp(
+    // 3. Daftarkan SEMUA UseCase di sini agar tidak NULL saat dipanggil context.read
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<GetTerbaru>(
+          create: (context) => GetTerbaru(comicRepository),
+        ),
+        RepositoryProvider<GetPopuler>(
+          create: (context) => GetPopuler(comicRepository),
+        ),
+        RepositoryProvider<GetPopulerManga>(
+          create: (context) => GetPopulerManga(comicRepository),
+        ),
+        RepositoryProvider<GetPopulerManhwa>(
+          create: (context) => GetPopulerManhwa(comicRepository),
+        ),
+        RepositoryProvider<GetPopulerManhua>(
+          create: (context) => GetPopulerManhua(comicRepository),
+        ),
+      ],
+      child: const VumiApp(),
+    ),
+  );
+}
+
+class VumiApp extends StatelessWidget {
+  const VumiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeState>(
-      builder: (context, state) {
-        if (state is HomeLoading) {
-          // Menggunakan loading yang lebih halus di tengah layar
-          return const CircularProgressIndicator().centered();
-        } else if (state is HomeError) {
-          return VStack([
-            "Gagal mengambil data".text.semiBold.make(),
-            10.heightBox,
-            state.message.text.red500.center.make(),
-            20.heightBox,
-            "Coba Lagi".text.white
-                .make()
-                .centered()
-                .box
-                .indigo600
-                .roundedSM
-                .px16
-                .py8
-                .make()
-                .onTap(() => context.read<HomeCubit>().fetchHomeData()),
-          ]).centered().p20();
-        } else if (state is HomeLoaded) {
-          return RefreshIndicator(
-            // Fungsi refresh untuk memicu penarikan data ulang dari API Vercel
-            onRefresh: () => context.read<HomeCubit>().fetchHomeData(),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              child: VStack([
-                // 1. Banner Headline (Carousel)
-                FeaturedSection(data: state.manga.take(5).toList()),
-
-                // 2. Section Card Panjang (Style My Hero Academia)
-                "Baru Update".text.xl2.bold.make().p16(),
-                ComicFeaturedCard(data: state.terbaru),
-
-                // 3. Manga Section
-                _buildSectionTitle(
-                  context,
-                  "Manga Terpopuler",
-                  onSeeAll: () {
-                    // Tambahkan navigasi ke halaman list manga di sini
-                  },
-                ),
-                ComicHorizontalList(data: state.manga),
-
-                // 4. Manhwa Section
-                _buildSectionTitle(
-                  context,
-                  "Manhwa Terpopuler",
-                  onSeeAll: () {
-                    // Navigasi ke list manhwa
-                  },
-                ),
-                ComicHorizontalList(data: state.manhwa),
-
-                // 5. Manhua Section
-                _buildSectionTitle(
-                  context,
-                  "Manhua Terpopuler",
-                  onSeeAll: () {
-                    // Navigasi ke list manhua
-                  },
-                ),
-                ComicHorizontalList(data: state.manhua),
-
-                // Memberikan ruang agar tidak tertutup Floating Bottom Bar
-                150.heightBox,
-              ]),
-            ),
-          );
-        }
-        return const SizedBox();
-      },
+    return MaterialApp(
+      title: 'VUMI',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+      ),
+      home: const MainScreen(),
     );
-  }
-
-  // UI Title Section dengan tombol "Lihat Semua" di sisi kanan
-  Widget _buildSectionTitle(
-    BuildContext context,
-    String title, {
-    VoidCallback? onSeeAll,
-  }) {
-    return HStack([
-      // Judul Section
-      title.text.xl.bold.make().expand(),
-
-      // Tombol Lihat Semua (Ganti ke Amber agar sinkron dengan badge)
-      "Lihat Semua"
-          .text
-          .amber500 // <--- Ganti di sini
-          .semiBold
-          .sm
-          .make()
-          .onTap(onSeeAll ?? () {}),
-    ], alignment: MainAxisAlignment.spaceBetween).wFull(context).p16();
   }
 }

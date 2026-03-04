@@ -18,23 +18,23 @@ class RemoteDataSourceImpl implements RemoteDataSource {
 
   RemoteDataSourceImpl({required this.client});
 
+  /// Helper untuk memproses response List komik (Terbaru, Populer, Search)
   List<dynamic> _handleResponse(http.Response response, String context) {
     if (response.statusCode == 200) {
       final dynamic decodedData = json.decode(response.body);
 
-      // CEK 1: Jika API langsung mengembalikan List (tanpa wrapper 'data')
+      // Cek jika response langsung berupa List
       if (decodedData is List) {
         return decodedData;
       }
 
-      // CEK 2: Jika API menggunakan wrapper 'data' (seperti JSON terbaru kamu)
+      // Cek jika response menggunakan wrapper 'data' (Standar Express kamu)
       if (decodedData is Map<String, dynamic>) {
         final dynamic result = decodedData['data'];
 
         if (result is List) {
           return result;
         } else if (result is Map) {
-          // Jika data dikelompokkan berdasarkan kategori di dalam Map
           final List<dynamic> combined = [];
           result.forEach((key, value) {
             if (value is List) combined.addAll(value);
@@ -43,22 +43,39 @@ class RemoteDataSourceImpl implements RemoteDataSource {
         }
       }
 
-      dev.log("Data tidak dikenal di $context: $decodedData");
+      dev.log("[$context] Struktur data tidak dikenali: $decodedData");
       return [];
     } else {
-      dev.log("Gagal di $context: Status ${response.statusCode}");
+      dev.log("[$context] Server Error: ${response.statusCode}");
       throw Exception("Gagal memuat data $context");
     }
   }
 
   @override
-  Future<List<dynamic>> fetchPopulerManga() async {
+  Future<Map<String, dynamic>> fetchDetailManga(String slug) async {
     try {
-      // Gunakan variabel dari ApiConstants agar konsisten
-      final response = await client.get(Uri.parse(ApiConstants.popularManga));
-      return _handleResponse(response, "Populer Manga");
+      // Validasi slug sebelum melakukan request untuk mencegah ENOTFOUND
+      if (slug.trim().isEmpty) {
+        dev.log("Error: Attempted to fetch detail with empty slug");
+        throw Exception("Slug komik tidak ditemukan");
+      }
+
+      final url = "${ApiConstants.detailKomik}/$slug";
+      dev.log("Fetching Detail: $url"); // Log URL untuk debugging di Redmibook
+
+      final response = await client.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decoded = json.decode(response.body);
+        if (decoded['status'] == true && decoded['data'] != null) {
+          return decoded['data'] as Map<String, dynamic>;
+        }
+      }
+
+      dev.log("Detail Error [${response.statusCode}]: ${response.body}");
+      throw Exception("Gagal mengambil detail komik dari server");
     } catch (e) {
-      dev.log("Error fetchPopulerManga: $e");
+      dev.log("Exception fetchDetailManga: $e");
       rethrow;
     }
   }
@@ -75,12 +92,12 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   }
 
   @override
-  Future<List<dynamic>> fetchPopulerAll() async {
+  Future<List<dynamic>> fetchPopulerManga() async {
     try {
-      final response = await client.get(Uri.parse(ApiConstants.popularAll));
-      return _handleResponse(response, "Populer All");
+      final response = await client.get(Uri.parse(ApiConstants.popularManga));
+      return _handleResponse(response, "Populer Manga");
     } catch (e) {
-      dev.log("Error fetchPopulerAll: $e");
+      dev.log("Error fetchPopulerManga: $e");
       rethrow;
     }
   }
@@ -108,6 +125,17 @@ class RemoteDataSourceImpl implements RemoteDataSource {
   }
 
   @override
+  Future<List<dynamic>> fetchPopulerAll() async {
+    try {
+      final response = await client.get(Uri.parse(ApiConstants.popularAll));
+      return _handleResponse(response, "Populer All");
+    } catch (e) {
+      dev.log("Error fetchPopulerAll: $e");
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<dynamic>> searchManga(String query) async {
     try {
       final response = await client.get(
@@ -116,23 +144,6 @@ class RemoteDataSourceImpl implements RemoteDataSource {
       return _handleResponse(response, "Search");
     } catch (e) {
       dev.log("Error searchManga: $e");
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Map<String, dynamic>> fetchDetailManga(String slug) async {
-    try {
-      final response = await client.get(
-        Uri.parse("${ApiConstants.detailKomik}/$slug"),
-      );
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> decoded = json.decode(response.body);
-        return decoded['data'] as Map<String, dynamic>;
-      }
-      throw Exception("Gagal mengambil detail komik");
-    } catch (e) {
-      dev.log("Error fetchDetailManga: $e");
       rethrow;
     }
   }
